@@ -1,22 +1,24 @@
 import { parse } from "acorn"
 
-import { sleepSync, spawnSync, stderr } from "bun";
+import { sleepSync, spawnSync, stderr, file} from "bun";
 
-import yargs, { exit } from 'yargs';
+import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { getContent } from "./utils/network";
 import { jodiff } from "./utils/differ";
 
-var hasRun = false
+import {enable} from "colors";
+enable()
 
-yargs(hideBin(process.argv))
-    .command("custom", "Run a custom script at an interval for obtaining the URLs. Use when your script URLs are dynamically obtained.", (yarg)=>{
-        return yarg.positional("script", {
+var program = yargs(hideBin(Bun.argv));
+program = program.command("custom [command] [type] [interval] [runImmediately]", "Run a shell command at an interval for obtaining the URLs. Use when your script URLs are dynamically obtained.", (yarg)=>{
+        return yarg.positional("command", {
             type: "string",
-            describe: "Shell command to run. Must write the obtained script URL / script content to stdout. Use ."
-        }).positional("type", {
+            describe: "Shell command to run. Must write result to stdout."
+        }).demandOption("command").positional("type", {
             choices: ["url", "content"],
-            desc: "Type of script output - script URL (url) or script contents (content). "
+            desc: "What the command outputs - script URL (url) or script contents (content). URL as default.",
+            default: "url"
         }).positional("interval", {
             desc: "Interval to run the script, in seconds.",
             type : "number",
@@ -32,41 +34,69 @@ yargs(hideBin(process.argv))
         var oldContent = ""
         while (true) {
             const spawnResult = spawnSync({
-                cmd: [customArgs.script!],
-                stdout: "pipe"
+                cmd: customArgs.command!.split(" "),
+                stdout: "pipe",
             })
             
-            if (spawnResult.stderr) {
-                return exit(-1, new Error(spawnResult.stderr.toString(), {cause:"Shell script wrote to stderr, terminating."}))
+            if (spawnResult.stderr.length > 0) {
+                const err = new Error(spawnResult.stderr.toString(), {cause:"Shell script wrote to stderr, terminating."})
+                console.error(err)
+
             } else if (!spawnResult.success) {
-                return exit(-1, new Error("Spawn not successful.", {cause:"Shell script wouldn't start, terminating."}))
+                console.log("FACK!")
+                return program.exit(-1, new Error("Spawn not successful.", {cause:"Shell script wouldn't start, terminating."}))
             }
             
             const stdContent = spawnResult.stdout.toString()
+            console.log("s")
+
             var content;
             if (customArgs.type == "content") {
                 content = stdContent
             } else {
                 content = await getContent(stdContent).catch((rej)=>{
-                    return exit(-1, rej as Error)
+                    return program.exit(-1, rej as Error)
                 })
             }
+
+            console.log("s")
 
             oldContent ??= content!
 
             jodiff(oldContent, content!) // if equal it'll be skipped anyways
+            sleepSync(customArgs.interval * 1000)
         }
         
     }).command("compare [oldFile] [newFile]", "Compare two files.", (yarg)=>{
-        // TODO: Implement
         return yarg.positional("oldFile", {
-            type: "string"
+            type: "string",
+            desc:"Relative position of the first file.",
+            demandOption: "You must include both files."
+        }).positional("newFile", {
+            type: "string",
+            desc:"Relative position of the second (new) file.",
+            demandOption: "You must include a file to compare with."
         })
+    }, async (customArgs)=>{
+
+        const firstFile = await file(customArgs.oldFile).text()
+        const secondFile = await file(customArgs.newFile).text()
+
+        const difference = jodiff(firstFile, secondFile)
+
+        difference.forEach((part) => {
+            let text = part.added ? part.value.bgGreen :
+                part.removed ? part.value.bgRed :
+                part.value;
+        process.stderr.write(text);
+    });
     }).command("combine [oldFile] [newFile] [outFile]", "Get a version of the new file with only new variables containing updated names.", (yarg)=>{
         // TODO: Implement
 
-    })
-    .parse()
+    });
+
+program.strict().demandCommand(1).parse()
+
 
 // jodiff -s custom.js -t 60 s
 // jodiff --old=first.js --new=second.js

@@ -12,6 +12,8 @@
   "dependencies": {
     "@types/yargs": "^17.0.35",
     "acorn": "^8.15.0",
+    "colors": "^1.4.0",
+    "diff": "^8.0.3",
     "yargs": "^18.0.0"
   }
 }
