@@ -10,6 +10,7 @@
     "typescript": "^5"
   },
   "dependencies": {
+    "@types/acorn": "^6.0.4",
     "@types/yargs": "^17.0.35",
     "acorn": "^8.15.0",
     "colors": "^1.4.0",

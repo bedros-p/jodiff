@@ -4,6 +4,7 @@
     "": {
       "name": "jodiff",
       "dependencies": {
+        "@types/acorn": "^6.0.4",
         "@types/yargs": "^17.0.35",
         "acorn": "^8.15.0",
         "colors": "^1.4.0",
@@ -19,6 +20,8 @@
     },
   },
   "packages": {
+    "@types/acorn": ["@types/acorn@6.0.4", "", { "dependencies": { "acorn": "*" } }, "sha512-DafqcBAjbOOmgqIx3EF9EAdBKAKgspv00aQVIW3fVQ0TXo5ZPBeSRey1SboVAUzjw8Ucm7cd1gtTSlosYoEQLA=="],
+
     "@types/bun": ["@types/bun@1.3.6", "", { "dependencies": { "bun-types": "1.3.6" } }, "sha512-uWCv6FO/8LcpREhenN1d1b6fcspAB+cefwD7uti8C8VffIv0Um08TKMn98FynpTiU38+y2dUO55T11NgDt8VAA=="],
 
     "@types/node": ["@types/node@25.0.9", "", { "dependencies": { "undici-types": "~7.16.0" } }, "sha512-/rpCXHlCWeqClNBwUhDcusJxXYDjZTyE8v5oTO7WbL8eij2nKhUeU89/6xgjU7N4/Vh3He0BtyhJdQbDyhiXAw=="],
