@@ -1,4 +1,5 @@
 const dnafnj = Math.random()
 const dnjdf = Math.random()
-const c = dnafnj + dnjdf
+const seari = 2
+const c = dnafnj + dnjdf + seari
 
