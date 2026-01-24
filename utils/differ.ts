@@ -2,8 +2,7 @@ import { diffChars, type ChangeObject } from "diff"
 import { parse, Token, TokenType, tokTypes, tokenizer} from "acorn"
 
 
-// This diff works by normalizing the variables with a list of identifiers from the previous program.
-
+// Occurence
 export function jodiff(oldContent:string, newContent:string) {
     // TODO: Implement
     
@@ -16,14 +15,17 @@ export function jodiff(oldContent:string, newContent:string) {
 
     const tok = tokenizer(oldContent, {ecmaVersion:"latest"})
     
-    // Need to create a mapping of variables from new to old
-    var idents : Token[] = []
+    var idents : string[] = []
+    var newIdents : string[] = []
     var normalizedOld = ""
+    let i = 0 
     parse(oldContent, {ecmaVersion:"latest", onToken(token) {
-        normalizedOld += oldContent.slice(token.start, token.end)
         if (token.type == tokTypes.name){
-            idents.push((token as any).value)
+            normalizedOld += "v"+i++
+        } else {
+            normalizedOld += oldContent.slice(token.start, token.end)
         }
+
 
         if (token.type.keyword != undefined) {
             normalizedOld += " "
@@ -33,21 +35,43 @@ export function jodiff(oldContent:string, newContent:string) {
     }})
 
     var program = ""
-    var i = 0
-    
-    const newModei = parse(newContent, {ecmaVersion:"latest", onToken(token) {
+    i = 0;    
+    parse(newContent, {ecmaVersion: "latest", onToken(token){
+        // tokValue = newContent.slice(token.start, token.end)
+        // program += newContent.slice(token.start, token.end)
         if (token.type == tokTypes.name){
-            program+=idents.at(i)
-            i++
+            program += "v"+i++
         } else {
-            program+= newContent.slice(token.start, token.end)
+            program += newContent.slice(token.start, token.end)
         }
+
         if (token.type.keyword != undefined) {
             program += " "
         }
     }, onInsertedSemicolon(token) {
         program += "\n"
     }})
+
+    // Pass for algorithm stuff
+
+    // console.log(idents, "\n\n-------\n\n")
+    // console.log(newIdents, "\n\n-------\n\n")
+
+    // const oldOccurences : {[ident : string] : number[]} = {}
+    // const newOccurences : {[ident : string] : number[]} = {}
+
+    // // optimization comes later
+    // idents.forEach((item, i)=>{
+    //     if (oldOccurences[item] == undefined) oldOccurences[item] = [];
+    //     oldOccurences[item].push(i)
+    // })
+
+    // newIdents.forEach((item, i)=>{
+    //     if (newOccurences[item] == undefined) newOccurences[item] = [];
+    //     newOccurences[item].push(i)
+    // })
+
+    // console.log(newOccurences, oldOccurences)
 
     // console.log(newModei, "-------\n\n\n\n\n")
     console.log(normalizedOld, "-------\n\n\n\n\n")
