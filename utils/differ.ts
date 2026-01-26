@@ -15,17 +15,16 @@ export function jodiff(oldContent:string, newContent:string) {
 
     const tok = tokenizer(oldContent, {ecmaVersion:"latest"})
     
-    var idents : string[] = []
-    var newIdents : string[] = []
     var normalizedOld = ""
     let i = 0 
+    const oldMapping : {[ident : string] : string} = {}
     parse(oldContent, {ecmaVersion:"latest", onToken(token) {
         if (token.type == tokTypes.name){
-            normalizedOld += "v"+i++
+            oldMapping[(token as any).value] ??= "v"+i++
+            normalizedOld += oldMapping[(token as any).value]
         } else {
             normalizedOld += oldContent.slice(token.start, token.end)
         }
-
 
         if (token.type.keyword != undefined) {
             normalizedOld += " "
@@ -36,11 +35,21 @@ export function jodiff(oldContent:string, newContent:string) {
 
     var program = ""
     i = 0;    
+    let indexStart = 0
+    let statementStart = 0
+
+    const newMapping : {[ident : string] : string} = {}
     parse(newContent, {ecmaVersion: "latest", onToken(token){
         // tokValue = newContent.slice(token.start, token.end)
         // program += newContent.slice(token.start, token.end)
+        
         if (token.type == tokTypes.name){
-            program += "v"+i++
+            newMapping[(token as any).value] ??= "v"+indexStart++
+            // let ident = newMapping[(token as any).value]
+            // if (ident != normalizedOld.slice(token.start, token.end)){
+                // ident
+            // }
+            program += newMapping[(token as any).value]
         } else {
             program += newContent.slice(token.start, token.end)
         }
@@ -48,7 +57,25 @@ export function jodiff(oldContent:string, newContent:string) {
         if (token.type.keyword != undefined) {
             program += " "
         }
-    }, onInsertedSemicolon(token) {
+
+        // if (program.slice(token.start, token.end) != normalizedOld.slice(token.start, token.end)){
+        //     if (token.type == tokTypes.name){
+        //         newMapping[(token as any).value] ??= "_v"+indexStart++
+        //         program += newMapping[(token as any).value]
+        //     }
+        // }
+        
+    }, onInsertedSemicolon(lastTokEnd) {
+        // const newStatement = program.slice(statementStart, lastTokEnd)
+        // const oldStatement = normalizedOld.slice(statementStart, lastTokEnd)
+
+        // if (newStatement != oldStatement) {
+        //     indexStart = i
+        // } else {
+        //     i = indexStart  
+        // }
+        // // statementStart = 
+        // statementStart = lastTokEnd
         program += "\n"
     }})
 
